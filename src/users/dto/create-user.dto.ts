@@ -1,6 +1,6 @@
 import { IsEmail, IsEnum, IsOptional, IsString, MinLength, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { RoleType, StatusType } from '../../types/types';
+import { RoleType, StatusType } from '../users.type';
 
 export class CreateUserDto {
     @ApiProperty({

@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
-import { ApiProperty } from '@nestjs/swagger';
-import { RoleType, StatusType } from '../../types/types';
+import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
+import { RoleType, StatusType } from '../users.type';
 
 @Entity('users')
 export class User {
@@ -12,7 +13,8 @@ export class User {
     @Column({ unique: true })
     email: string;
 
-    @ApiProperty({ example: '$2b$10$...' })
+    @ApiHideProperty()
+    @Exclude()
     @Column()
     password: string;
 

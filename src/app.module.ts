@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -26,6 +27,7 @@ import configuration from './config/configuration';
       }),
     }),
     UsersModule,
+    SubscriptionsModule,
   ],
   controllers: [],
   providers: [],
