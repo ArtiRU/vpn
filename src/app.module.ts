@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ServersModule } from './servers/servers.module';
 import { ConfigsModule } from './configs/configs.module';
+import { PaymentsModule } from './payments/payments.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -32,6 +33,7 @@ import configuration from './config/configuration';
     SubscriptionsModule,
     ServersModule,
     ConfigsModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [],
