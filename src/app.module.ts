@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ServersModule } from './servers/servers.module';
 import { ConfigsModule } from './configs/configs.module';
@@ -18,6 +20,10 @@ import configuration from './config/configuration';
       isGlobal: true,
       load: [configuration],
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // Time to live in milliseconds (1 minute)
+      limit: 100, // Max requests per TTL
+    }]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -44,6 +50,11 @@ import configuration from './config/configuration';
     ClientModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
