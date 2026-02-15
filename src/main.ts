@@ -2,15 +2,26 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json } from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+  });
   
   // Enable CORS for client applications
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
   });
+
+  // Use json parser with increased limit, but preserve raw body for webhooks
+  app.use('/payments/webhook/stripe', json({ 
+    verify: (req: any, res, buf) => {
+      req.rawBody = buf;
+    }
+  }));
+  app.use(json({ limit: '10mb' }));
 
   app.useGlobalPipes(
     new ValidationPipe({

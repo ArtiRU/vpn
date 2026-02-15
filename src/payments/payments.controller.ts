@@ -1,10 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Headers, Req } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Payment } from './entities/payment.entity';
 import { PaymentStatusType } from './payments.type';
+import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+import { CheckoutSessionResponseDto } from './dto/checkout-session-response.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { User } from '../users/entities/user.entity';
+import { Public } from '../auth/decorators/public.decorator';
+import type { Request } from 'express';
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -92,5 +100,39 @@ export class PaymentsController {
   @ApiParam({ name: 'id', description: 'Payment ID' })
   remove(@Param('id') id: string) {
     return this.paymentsService.remove(id);
+  }
+
+  // Stripe Integration Endpoints
+
+  @Post('checkout/create-session')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create Stripe checkout session' })
+  @ApiResponse({ status: 201, description: 'Checkout session created', type: CheckoutSessionResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  createCheckoutSession(
+    @GetUser() user: User,
+    @Body() createCheckoutDto: CreateCheckoutSessionDto,
+  ): Promise<CheckoutSessionResponseDto> {
+    return this.paymentsService.createCheckoutSession(user.id, createCheckoutDto);
+  }
+
+  @Post('webhook/stripe')
+  @Public()
+  @ApiOperation({ summary: 'Stripe webhook endpoint' })
+  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
+  @ApiResponse({ status: 400, description: 'Webhook signature verification failed' })
+  async handleStripeWebhook(
+    @Headers('stripe-signature') signature: string,
+    @Req() req: RawBodyRequest<Request>,
+  ): Promise<{ received: boolean }> {
+    const rawBody = req.rawBody;
+    if (!rawBody) {
+      throw new Error('Raw body not available');
+    }
+    await this.paymentsService.handleStripeWebhook(signature, rawBody);
+    return { received: true };
   }
 }

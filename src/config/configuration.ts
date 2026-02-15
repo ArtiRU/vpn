@@ -15,5 +15,11 @@ export default () => ({
         expiresIn: process.env.JWT_EXPIRES_IN || '15m',
         refreshSecret: process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-in-production',
         refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    },
+    stripe: {
+        apiKey: process.env.STRIPE_SECRET_KEY || '',
+        webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+        monthlyPriceId: process.env.STRIPE_MONTHLY_PRICE_ID || '',
+        yearlyPriceId: process.env.STRIPE_YEARLY_PRICE_ID || '',
     }
 });
