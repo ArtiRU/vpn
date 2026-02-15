@@ -6,6 +6,8 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ServersModule } from './servers/servers.module';
 import { ConfigsModule } from './configs/configs.module';
 import { PaymentsModule } from './payments/payments.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { ServerMetricsModule } from './server-metrics/server-metrics.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -34,6 +36,8 @@ import configuration from './config/configuration';
     ServersModule,
     ConfigsModule,
     PaymentsModule,
+    SessionsModule,
+    ServerMetricsModule,
   ],
   controllers: [],
   providers: [],
