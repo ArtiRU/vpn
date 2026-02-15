@@ -55,7 +55,7 @@ export class SessionsService {
     const session = this.sessionsRepository.create({
       ...sessionData,
       connected_at: new Date(sessionData.connected_at),
-      disconnected_at: new Date(sessionData.disconnected_at),
+      disconnected_at: sessionData.disconnected_at ? new Date(sessionData.disconnected_at) : undefined,
       bytes_sent: sessionData.bytes_sent?.toString() || '0',
       bytes_received: sessionData.bytes_received?.toString() || '0',
     });
@@ -164,10 +164,12 @@ export class SessionsService {
 
     // Конвертируем даты и bigint
     if (updateSessionDto.connected_at) {
-      updateSessionDto.connected_at = new Date(updateSessionDto.connected_at);
+      session.connected_at = new Date(updateSessionDto.connected_at);
+      delete updateSessionDto.connected_at;
     }
     if (updateSessionDto.disconnected_at) {
-      updateSessionDto.disconnected_at = new Date(updateSessionDto.disconnected_at);
+      session.disconnected_at = new Date(updateSessionDto.disconnected_at);
+      delete updateSessionDto.disconnected_at;
     }
     if (updateSessionDto.bytes_sent !== undefined) {
       session.bytes_sent = updateSessionDto.bytes_sent.toString();
