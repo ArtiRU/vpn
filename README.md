@@ -1,98 +1,295 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# VPN Service Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A comprehensive NestJS-based backend for VPN service management with user authentication, subscription handling, payment processing, and VPN server management.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- 🔐 **JWT Authentication** - Secure user authentication with access and refresh tokens
+- 👥 **User Management** - User registration, login, profile management
+- 💳 **Payment Integration** - Stripe integration for subscription payments
+- 📱 **Client API** - Dedicated endpoints for VPN client applications
+- 🌐 **Server Management** - VPN server management with load balancing
+- 📊 **Subscription System** - Monthly/yearly subscription plans
+- 🔒 **Security** - Rate limiting, input validation, error handling
+- 📝 **API Documentation** - Swagger/OpenAPI documentation
+- 🗄️ **Database** - PostgreSQL with TypeORM
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+- **Framework**: NestJS 11
+- **Database**: PostgreSQL + TypeORM
+- **Authentication**: Passport JWT
+- **Payments**: Stripe
+- **Validation**: class-validator, class-transformer
+- **Documentation**: Swagger/OpenAPI
+- **Security**: Throttler (rate limiting)
 
+## Prerequisites
+
+- Node.js (v18 or higher)
+- PostgreSQL (v14 or higher)
+- npm or yarn
+
+## Installation
+
+1. Clone the repository:
 ```bash
-$ npm install
+git clone <repository-url>
+cd vpn
 ```
 
-## Compile and run the project
-
+2. Install dependencies:
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
-
+3. Create `.env` file:
 ```bash
-# unit tests
-$ npm run test
+cp .env.example .env
+```
 
-# e2e tests
-$ npm run test:e2e
+4. Configure environment variables in `.env`:
+```env
+# Server
+PORT=3000
+CORS_ORIGIN=*
 
-# test coverage
-$ npm run test:cov
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_DATABASE=vpn
+DB_SYNCHRONIZE=true
+DB_LOGGING=false
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_your_key
+STRIPE_WEBHOOK_SECRET=whsec_your_secret
+STRIPE_MONTHLY_PRICE_ID=price_monthly
+STRIPE_YEARLY_PRICE_ID=price_yearly
+
+# Frontend URL
+FRONTEND_URL=http://localhost:3000
+```
+
+5. Set up PostgreSQL database:
+```bash
+createdb vpn
+```
+
+## Running the Application
+
+### Development
+```bash
+npm run start:dev
+```
+
+### Production
+```bash
+npm run build
+npm run start:prod
+```
+
+### Testing
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+## API Documentation
+
+Once the application is running, access:
+
+- **Swagger UI**: http://localhost:3000/api
+- **Full API Documentation**: See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
+
+## Project Structure
+
+```
+src/
+├── auth/                 # Authentication module (JWT, strategies, guards)
+├── users/                # User management
+├── subscriptions/        # Subscription management
+├── servers/              # VPN server management
+├── configs/              # VPN configuration management
+├── sessions/             # Active VPN sessions tracking
+├── payments/             # Payment processing (Stripe)
+├── client/               # Client API endpoints
+├── server-metrics/       # Server metrics and monitoring
+├── common/               # Shared utilities
+│   ├── decorators/       # Custom decorators
+│   ├── dto/              # Common DTOs
+│   ├── filters/          # Exception filters
+│   ├── guards/           # Custom guards
+│   ├── interceptors/     # Interceptors (logging, transform)
+│   ├── pipes/            # Custom pipes
+│   └── validators/       # Custom validators
+└── config/               # Application configuration
+```
+
+## Key Endpoints
+
+### Authentication
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login user
+- `POST /auth/refresh` - Refresh access token
+- `GET /auth/me` - Get current user profile
+
+### Client API (For VPN Apps)
+- `GET /client/servers` - Get available VPN servers
+- `GET /client/servers/country/:code` - Get servers by country
+- `GET /client/subscription/status` - Check subscription status
+- `GET /client/config?server_id=1` - Get VPN configuration
+- `GET /client/configs` - Get all user configurations
+
+### Payments
+- `POST /payments/checkout/create-session` - Create Stripe checkout
+- `POST /payments/webhook/stripe` - Stripe webhook handler
+
+## Database Schema
+
+The application uses the following main entities:
+
+- **Users** - User accounts
+- **Subscriptions** - User subscription records
+- **Servers** - VPN servers
+- **Configs** - VPN configurations per user/server
+- **Sessions** - Active VPN sessions
+- **Payments** - Payment transactions
+- **ServerMetrics** - Server performance metrics
+
+## Security Features
+
+- **JWT Authentication** - Secure token-based authentication
+- **Password Hashing** - bcrypt for password security
+- **Rate Limiting** - 100 requests/minute per IP
+- **Input Validation** - Comprehensive validation on all inputs
+- **CORS** - Configurable CORS policy
+- **Error Handling** - Global exception filter
+- **Logging** - Request/response logging
+
+## Development
+
+### Code Style
+```bash
+npm run format
+npm run lint
+```
+
+### Building
+```bash
+npm run build
 ```
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Using Docker (Recommended)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+1. Create `Dockerfile`:
+```dockerfile
+FROM node:18-alpine
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start:prod"]
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+2. Create `docker-compose.yml`:
+```yaml
+version: '3.8'
 
-## Resources
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    depends_on:
+      - db
 
-Check out a few resources that may come in handy when working with NestJS:
+  db:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=vpn
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=your_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+volumes:
+  pgdata:
+```
 
-## Support
+3. Run:
+```bash
+docker-compose up -d
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Environment-Specific Configurations
 
-## Stay in touch
+- Development: Use `.env` file
+- Production: Set environment variables securely
+- Never commit `.env` file to version control
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Monitoring
+
+The application includes:
+- HTTP request logging
+- Error logging with stack traces
+- Performance metrics (response times)
+
+## Roadmap
+
+- [ ] WebSocket support for real-time connection status
+- [ ] Two-factor authentication (2FA)
+- [ ] Admin dashboard
+- [ ] Usage analytics
+- [ ] Multi-protocol support (OpenVPN, IKEv2)
+- [ ] Automated server provisioning
+- [ ] Traffic monitoring and limits
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+UNLICENSED
+
+## Support
+
+For support and questions, please contact the development team.
+
+---
+
+**Built with ❤️ using NestJS**
