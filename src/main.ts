@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { json } from 'express';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -23,6 +25,13 @@ async function bootstrap() {
   }));
   app.use(json({ limit: '10mb' }));
 
+  // Global exception filter
+  app.useGlobalFilters(new AllExceptionsFilter());
+
+  // Global interceptors
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -30,8 +39,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   const config = new DocumentBuilder()
     .setTitle('VPN API')
