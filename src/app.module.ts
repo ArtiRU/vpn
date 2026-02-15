@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ServersModule } from './servers/servers.module';
+import { ConfigsModule } from './configs/configs.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -30,6 +31,7 @@ import configuration from './config/configuration';
     UsersModule,
     SubscriptionsModule,
     ServersModule,
+    ConfigsModule,
   ],
   controllers: [],
   providers: [],
