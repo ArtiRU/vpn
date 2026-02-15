@@ -5,6 +5,7 @@ import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { Subscription } from './entities/subscription.entity';
 import { User } from '../users/entities/user.entity';
+import { SubscriptionStatusType } from './subscriptions.type';
 
 @Injectable()
 export class SubscriptionsService {
@@ -127,5 +128,38 @@ export class SubscriptionsService {
     await this.subscriptionsRepository.delete(id);
 
     return subscription;
+  }
+
+  async findActiveByUserId(userId: string): Promise<Subscription | null> {
+    const now = new Date();
+    return this.subscriptionsRepository.findOne({
+      where: {
+        user: { id: userId },
+        status: SubscriptionStatusType.ACTIVE,
+      },
+      relations: ['user'],
+      order: {
+        end_date: 'DESC',
+      },
+    });
+  }
+
+  async hasActiveSubscription(userId: string): Promise<boolean> {
+    const subscription = await this.findActiveByUserId(userId);
+    if (!subscription) {
+      return false;
+    }
+    const now = new Date();
+    return subscription.end_date > now && subscription.start_date <= now;
+  }
+
+  async findByUserId(userId: string): Promise<Subscription[]> {
+    return this.subscriptionsRepository.find({
+      where: { user: { id: userId } },
+      relations: ['user'],
+      order: {
+        created_at: 'DESC',
+      },
+    });
   }
 }

@@ -9,6 +9,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { ServerMetricsModule } from './server-metrics/server-metrics.module';
 import { AuthModule } from './auth/auth.module';
+import { ClientModule } from './client/client.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -40,6 +41,7 @@ import configuration from './config/configuration';
     SessionsModule,
     ServerMetricsModule,
     AuthModule,
+    ClientModule,
   ],
   controllers: [],
   providers: [],
