@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { SubscriptionPlanType, SubscriptionStatusType } from '../subscriptions.type';
 import { User } from '../../users/entities/user.entity';
@@ -48,4 +48,9 @@ export class Subscription {
     @ApiProperty({ example: '2024-02-12T18:30:00.000Z' })
     @UpdateDateColumn({ type: 'timestamp' })
     updated_at: Date;
+
+    // Подписка живет отдельно от конфига
+    // Это позволяет блокировать доступ по дате, не удаляя ключи физически
+    @OneToMany('Payment', 'subscription')
+    payments: any[];
 }

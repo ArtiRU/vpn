@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, OneToMany } from 'typeorm';
 import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { RoleType, StatusType } from '../users.type';
@@ -45,4 +45,20 @@ export class User {
     @ApiProperty({ example: '2024-02-12T18:30:00.000Z', nullable: true })
     @Column({ type: 'timestamp', nullable: true })
     last_login: Date;
+
+    // Relations: users ───┬───── subscriptions
+    //                     ├───── configs
+    //                     ├───── payments
+    //                     └───── sessions
+    @OneToMany('Subscription', 'user')
+    subscriptions: any[];
+
+    @OneToMany('Config', 'user')
+    configs: any[];
+
+    @OneToMany('Payment', 'user')
+    payments: any[];
+
+    @OneToMany('Session', 'user')
+    sessions: any[];
 }

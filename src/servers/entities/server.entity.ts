@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProtocolType } from '../servers.type';
 
@@ -58,4 +58,16 @@ export class Server {
     @ApiProperty({ example: '2024-02-12T18:30:00.000Z' })
     @UpdateDateColumn({ type: 'timestamp' })
     updated_at: Date;
+
+    // Relations: servers ───┬───── configs
+    //                       ├───── sessions
+    //                       └───── server_metrics
+    @OneToMany('Config', 'server')
+    configs: any[];
+
+    @OneToMany('Session', 'server')
+    sessions: any[];
+
+    @OneToMany('ServerMetric', 'server')
+    serverMetrics: any[];
 }

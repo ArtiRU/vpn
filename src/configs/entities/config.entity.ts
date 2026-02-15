@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../users/entities/user.entity';
 import { Server } from '../../servers/entities/server.entity';
@@ -9,6 +9,8 @@ export class Config {
     @PrimaryGeneratedColumn('increment', { type: 'bigint' })
     id: string;
 
+    // Config привязан И к пользователю, И к серверу
+    // Один юзер может иметь ключи на разные страны
     @ManyToOne(() => User, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     user: User;
@@ -40,4 +42,8 @@ export class Config {
     @ApiProperty({ example: '2024-02-12T18:30:00.000Z' })
     @Column({ type: 'timestamp' })
     last_used: Date;
+
+    // Обратная связь: сессии наследуют всё через конфиг
+    @OneToMany('Session', 'config')
+    sessions: any[];
 }
