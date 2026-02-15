@@ -1,11 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { ServerMetricsService } from './server-metrics.service';
 import { CreateServerMetricDto } from './dto/create-server-metric.dto';
 import { UpdateServerMetricDto } from './dto/update-server-metric.dto';
 import { ServerMetric } from './entities/server-metric.entity';
 
 @ApiTags('Server Metrics')
+@ApiBearerAuth('JWT-auth')
 @Controller('server-metrics')
 export class ServerMetricsController {
   constructor(private readonly serverMetricsService: ServerMetricsService) {}

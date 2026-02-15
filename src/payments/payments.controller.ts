@@ -16,6 +16,7 @@ import { Public } from '../auth/decorators/public.decorator';
 import type { Request } from 'express';
 
 @ApiTags('Payments')
+@ApiBearerAuth('JWT-auth')
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
