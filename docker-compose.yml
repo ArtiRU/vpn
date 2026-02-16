@@ -61,7 +61,7 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
-      
+
       # Database - используем имя сервиса postgres как хост
       DB_HOST: postgres
       DB_PORT: 5432
@@ -70,21 +70,25 @@ services:
       DB_DATABASE: ${DB_DATABASE:-vpn}
       DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-false}
       DB_LOGGING: ${DB_LOGGING:-false}
-      
+
       # JWT
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
-      
+
       # Stripe
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       STRIPE_MONTHLY_PRICE_ID: ${STRIPE_MONTHLY_PRICE_ID}
       STRIPE_YEARLY_PRICE_ID: ${STRIPE_YEARLY_PRICE_ID}
-      
+
       # Frontend URL
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+
+      # WireGuard Management API
+      WIREGUARD_API_URL: ${WIREGUARD_API_URL}
+      WIREGUARD_API_KEY: ${WIREGUARD_API_KEY}
     
     ports:
       - "${PORT:-3000}:3000"
