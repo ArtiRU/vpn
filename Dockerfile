@@ -4,7 +4,7 @@
 # ========================================
 
 # Stage 1: Build
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Установка рабочей директории
 WORKDIR /app
@@ -26,7 +26,7 @@ RUN npm prune --production
 
 # ========================================
 # Stage 2: Production
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 # Установка безопасного пользователя (не root)
 RUN addgroup -g 1001 -S nodejs && \
