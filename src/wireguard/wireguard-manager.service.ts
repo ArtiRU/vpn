@@ -6,6 +6,7 @@ import { User } from '../users/entities/user.entity';
 import { Server } from '../servers/entities/server.entity';
 import { WireguardService } from './wireguard.service';
 import * as crypto from 'crypto';
+import {SubscriptionStatusType} from "../subscriptions/subscriptions.type";
 
 @Injectable()
 export class WireguardManagerService {
@@ -41,7 +42,7 @@ export class WireguardManagerService {
 
     // Проверяем активную подписку
     const activeSubscription = user.subscriptions?.find(
-      (sub: any) => sub.status === 'active'
+      (sub: any) => sub.status === SubscriptionStatusType.ACTIVE
     );
     
     if (!activeSubscription) {
