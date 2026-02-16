@@ -5,9 +5,13 @@ import { ConfigsController } from './configs.controller';
 import { Config } from './entities/config.entity';
 import { User } from '../users/entities/user.entity';
 import { Server } from '../servers/entities/server.entity';
+import { WireguardModule } from '../wireguard/wireguard.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Config, User, Server])],
+  imports: [
+    TypeOrmModule.forFeature([Config, User, Server]),
+    WireguardModule,
+  ],
   controllers: [ConfigsController],
   providers: [ConfigsService],
   exports: [ConfigsService],

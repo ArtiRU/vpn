@@ -1,0 +1,145 @@
+# ========================================
+# Docker Compose для VPN Backend
+# Запуск: docker-compose up -d
+# Остановка: docker-compose down
+# ========================================
+
+version: '3.8'
+
+services:
+  # ========================================
+  # PostgreSQL Database
+  # ========================================
+  postgres:
+    image: postgres:14-alpine
+    container_name: vpn_postgres
+    restart: unless-stopped
+    
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-vpn}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    
+    volumes:
+      # Persistent storage для данных
+      - postgres_data:/var/lib/postgresql/data
+      # Backup директория (опционально)
+      - ./backups:/backups
+    
+    ports:
+      # Открываем порт для локальной разработки
+      # В продакшене можно убрать (оставить только внутреннюю сеть)
+      - "${DB_PORT:-5432}:5432"
+    
+    networks:
+      - vpn_network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # NestJS Backend Application
+  # ========================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vpn_backend
+    restart: unless-stopped
+    
+    # Зависимость от базы данных
+    depends_on:
+      postgres:
+        condition: service_healthy
+    
+    environment:
+      # Server
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      
+      # Database - используем имя сервиса postgres как хост
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_DATABASE: ${DB_DATABASE:-vpn}
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-false}
+      DB_LOGGING: ${DB_LOGGING:-false}
+      
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_MONTHLY_PRICE_ID: ${STRIPE_MONTHLY_PRICE_ID}
+      STRIPE_YEARLY_PRICE_ID: ${STRIPE_YEARLY_PRICE_ID}
+      
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    
+    ports:
+      - "${PORT:-3000}:3000"
+    
+    networks:
+      - vpn_network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Логирование
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ========================================
+  # pgAdmin (опционально, для разработки)
+  # Раскомментируйте, если нужен web-интерфейс для PostgreSQL
+  # ========================================
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: vpn_pgadmin
+  #   restart: unless-stopped
+  #   
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@vpn.local}
+  #     PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+  #   
+  #   ports:
+  #     - "5050:80"
+  #   
+  #   networks:
+  #     - vpn_network
+  #   
+  #   depends_on:
+  #     - postgres
+
+# ========================================
+# Networks
+# ========================================
+networks:
+  vpn_network:
+    driver: bridge
+    name: vpn_network
+
+# ========================================
+# Volumes (persistent storage)
+# ========================================
+volumes:
+  postgres_data:
+    name: vpn_postgres_data
+    driver: local

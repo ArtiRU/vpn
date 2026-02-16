@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { ServersService } from '../servers/servers.service';
 import { ConfigsService } from '../configs/configs.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { WireguardManagerService } from '../wireguard/wireguard-manager.service';
 import { ServerInfoDto } from './dto/server-info.dto';
 import { SubscriptionStatusDto } from './dto/subscription-status.dto';
 import { VpnConfigDto } from './dto/vpn-config.dto';
@@ -12,6 +13,7 @@ export class ClientService {
         private readonly serversService: ServersService,
         private readonly configsService: ConfigsService,
         private readonly subscriptionsService: SubscriptionsService,
+        private readonly wireguardManager: WireguardManagerService,
     ) {}
 
     async getAvailableServers(): Promise<ServerInfoDto[]> {
@@ -78,38 +80,30 @@ export class ClientService {
         };
     }
 
-    async getVpnConfig(userId: string, serverId: number): Promise<VpnConfigDto> {
+    async getVpnConfig(userId: string, serverId?: number, countryCode?: string): Promise<VpnConfigDto> {
         // Check if user has active subscription
         const hasSubscription = await this.subscriptionsService.hasActiveSubscription(userId);
         if (!hasSubscription) {
             throw new ForbiddenException('Active subscription required to get VPN configuration');
         }
 
-        // Find existing config for this user and server
-        const configs = await this.configsService.findByUserId(userId);
-        const existingConfig = configs.find(config => config.server.id === serverId);
-
-        if (!existingConfig) {
-            throw new NotFoundException('No configuration found for this server. Please contact support.');
-        }
+        // Получаем или создаем конфигурацию автоматически
+        const config = await this.wireguardManager.getOrCreateConfig(userId, serverId, countryCode);
 
         // Check if config is expired
-        if (existingConfig.expires_at < new Date()) {
+        if (config.expires_at < new Date()) {
             throw new ForbiddenException('Your VPN configuration has expired. Please contact support.');
         }
 
-        // Update last_used timestamp
-        await this.configsService.updateLastUsed(existingConfig.id);
-
         return {
-            id: existingConfig.id,
-            config_body: existingConfig.config_body,
-            allocated_ip: existingConfig.allocated_ip,
-            expires_at: existingConfig.expires_at,
-            server_name: existingConfig.server.name,
-            server_country: existingConfig.server.country_code,
-            server_hostname: existingConfig.server.hostname,
-            server_port: existingConfig.server.port,
+            id: config.id,
+            config_body: config.config_body,
+            allocated_ip: config.allocated_ip,
+            expires_at: config.expires_at,
+            server_name: config.server.name,
+            server_country: config.server.country_code,
+            server_hostname: config.server.hostname,
+            server_port: config.server.port,
         };
     }
 

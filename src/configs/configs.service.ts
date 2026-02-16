@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { CreateConfigDto } from './dto/create-config.dto';
@@ -6,9 +6,12 @@ import { UpdateConfigDto } from './dto/update-config.dto';
 import { Config } from './entities/config.entity';
 import { User } from '../users/entities/user.entity';
 import { Server } from '../servers/entities/server.entity';
+import { WireguardService } from '../wireguard/wireguard.service';
 
 @Injectable()
 export class ConfigsService {
+  private readonly logger = new Logger(ConfigsService.name);
+
   constructor(
     @InjectRepository(Config)
     private readonly configsRepository: Repository<Config>,
@@ -16,6 +19,7 @@ export class ConfigsService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(Server)
     private readonly serversRepository: Repository<Server>,
+    private readonly wireguardService: WireguardService,
   ) {}
 
   async create(createConfigDto: CreateConfigDto): Promise<Config> {
@@ -181,6 +185,24 @@ export class ConfigsService {
 
     if (!config) {
       throw new NotFoundException('Config not found');
+    }
+
+    // Попытка удалить peer из WireGuard сервера
+    try {
+      const serverUrl = this.wireguardService.createServerApiUrl(
+        config.server.hostname,
+        8080,
+      );
+      
+      // Извлекаем публичный ключ из config_body
+      const publicKeyMatch = config.config_body.match(/PublicKey\s*=\s*([^\s]+)/);
+      if (publicKeyMatch && publicKeyMatch[1]) {
+        await this.wireguardService.removeClient(publicKeyMatch[1], serverUrl);
+        this.logger.log(`Removed peer from WireGuard server: ${config.server.name}`);
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to remove peer from WireGuard server: ${error.message}`);
+      // Продолжаем удаление из БД даже если не удалось удалить с сервера
     }
 
     await this.configsRepository.delete(id);

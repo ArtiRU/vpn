@@ -1,0 +1,44 @@
+# Зависимости
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Сборка
+dist/
+build/
+
+# Тесты
+coverage/
+*.test.ts
+*.spec.ts
+test/
+
+# Документация
+*.md
+docs/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files (не включаем в образ!)
+.env
+.env.*
+
+# Логи
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Прочее
+*.tgz
+.npmrc
