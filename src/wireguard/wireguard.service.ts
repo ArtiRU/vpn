@@ -39,8 +39,8 @@ export interface WireGuardStatus {
 export class WireguardService {
   private readonly logger = new Logger(WireguardService.name);
   private axiosInstance: AxiosInstance;
-  private readonly apiUrl: string;
-  private readonly apiKey: string;
+  private readonly apiUrl: string | undefined;
+  private readonly apiKey: string | undefined;
 
   constructor(private readonly configService: ConfigService) {
     this.apiUrl = this.configService.get<string>('WIREGUARD_API_URL');

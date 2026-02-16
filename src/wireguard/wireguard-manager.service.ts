@@ -32,7 +32,7 @@ export class WireguardManagerService {
     // Проверяем существование пользователя
     const user = await this.usersRepository.findOne({
       where: { id: userId },
-      relations: ['subscription'],
+      relations: ['subscriptions'],
     });
 
     if (!user) {
@@ -40,7 +40,11 @@ export class WireguardManagerService {
     }
 
     // Проверяем активную подписку
-    if (!user.subscription || user.subscription.status !== 'active') {
+    const activeSubscription = user.subscriptions?.find(
+      (sub: any) => sub.status === 'active'
+    );
+    
+    if (!activeSubscription) {
       throw new BadRequestException('User does not have an active subscription');
     }
 
@@ -76,7 +80,7 @@ export class WireguardManagerService {
     );
 
     // Вычисляем дату истечения (на основе подписки)
-    const expiresAt = new Date(user.subscription.end_date);
+    const expiresAt = new Date(activeSubscription.end_date);
 
     // Сохраняем в базу данных
     const config = this.configsRepository.create({
@@ -196,7 +200,7 @@ export class WireguardManagerService {
     Array<{ serverId: number; name: string; isHealthy: boolean }>
   > {
     const servers = await this.serversRepository.find();
-    const results = [];
+    const results: Array<{ serverId: number; name: string; isHealthy: boolean }> = [];
 
     for (const server of servers) {
       const serverUrl = this.wireguardService.createServerApiUrl(
@@ -234,7 +238,7 @@ export class WireguardManagerService {
     countryCode?: string,
   ): Promise<Config> {
     // Пытаемся найти существующую активную конфигурацию
-    let config: Config;
+    let config: Config | null = null;
 
     if (serverId) {
       config = await this.configsRepository.findOne({
