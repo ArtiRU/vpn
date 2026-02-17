@@ -55,7 +55,9 @@ export class SessionsService {
     const session = this.sessionsRepository.create({
       ...sessionData,
       connected_at: new Date(sessionData.connected_at),
-      disconnected_at: sessionData.disconnected_at ? new Date(sessionData.disconnected_at) : undefined,
+      disconnected_at: sessionData.disconnected_at
+        ? new Date(sessionData.disconnected_at)
+        : undefined,
       bytes_sent: sessionData.bytes_sent?.toString() || '0',
       bytes_received: sessionData.bytes_received?.toString() || '0',
     });
@@ -110,7 +112,10 @@ export class SessionsService {
     return session;
   }
 
-  async update(id: string, updateSessionDto: UpdateSessionDto): Promise<Session> {
+  async update(
+    id: string,
+    updateSessionDto: UpdateSessionDto,
+  ): Promise<Session> {
     const session = await this.sessionsRepository.findOne({
       where: { id },
       relations: ['user', 'config', 'server'],
@@ -121,7 +126,10 @@ export class SessionsService {
     }
 
     // Если обновляется user_id, проверяем существование пользователя
-    if (updateSessionDto.user_id && updateSessionDto.user_id !== session.user?.id) {
+    if (
+      updateSessionDto.user_id &&
+      updateSessionDto.user_id !== session.user?.id
+    ) {
       const user = await this.usersRepository.findOne({
         where: { id: updateSessionDto.user_id },
       });
@@ -135,7 +143,10 @@ export class SessionsService {
     }
 
     // Если обновляется config_id, проверяем существование конфигурации
-    if (updateSessionDto.config_id && updateSessionDto.config_id !== session.config?.id) {
+    if (
+      updateSessionDto.config_id &&
+      updateSessionDto.config_id !== session.config?.id
+    ) {
       const config = await this.configsRepository.findOne({
         where: { id: updateSessionDto.config_id },
       });
@@ -149,7 +160,10 @@ export class SessionsService {
     }
 
     // Если обновляется server_id, проверяем существование сервера
-    if (updateSessionDto.server_id && updateSessionDto.server_id !== session.server?.id) {
+    if (
+      updateSessionDto.server_id &&
+      updateSessionDto.server_id !== session.server?.id
+    ) {
       const server = await this.serversRepository.findOne({
         where: { id: updateSessionDto.server_id },
       });
@@ -191,7 +205,11 @@ export class SessionsService {
     return this.sessionsRepository.save(session);
   }
 
-  async updateTraffic(id: string, bytesSent: number, bytesReceived: number): Promise<Session> {
+  async updateTraffic(
+    id: string,
+    bytesSent: number,
+    bytesReceived: number,
+  ): Promise<Session> {
     const session = await this.findOne(id);
     session.bytes_sent = bytesSent.toString();
     session.bytes_received = bytesReceived.toString();

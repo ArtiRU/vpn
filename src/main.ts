@@ -16,7 +16,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
   });
-  
+
   // Enable CORS for client applications
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
@@ -24,11 +24,14 @@ async function bootstrap() {
   });
 
   // Use json parser with increased limit, but preserve raw body for webhooks
-  app.use('/payments/webhook/stripe', json({ 
-    verify: (req: any, res, buf) => {
-      req.rawBody = buf;
-    }
-  }));
+  app.use(
+    '/payments/webhook/stripe',
+    json({
+      verify: (req: any, res, buf) => {
+        req.rawBody = buf;
+      },
+    }),
+  );
   app.use(json({ limit: '10mb' }));
 
   // Global exception filter
@@ -64,7 +67,7 @@ async function bootstrap() {
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
-  
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

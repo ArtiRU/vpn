@@ -197,7 +197,7 @@ export class XrayService {
       return response.data;
     } catch (error) {
       this.logger.error('Failed to add client:', error.message);
-      
+
       // Попробуем переавторизоваться
       if (error.response?.status === 401) {
         this.sessionCookie = undefined;
@@ -282,7 +282,7 @@ export class XrayService {
       this.logger.log(`Removed VLESS client: ${clientUUID}`);
     } catch (error) {
       this.logger.error('Failed to remove client:', error.message);
-      
+
       if (error.response?.status === 401) {
         this.sessionCookie = undefined;
         return await this.removeClient(inboundId, clientUUID);

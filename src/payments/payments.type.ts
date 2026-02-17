@@ -1,11 +1,11 @@
 export enum PaymentProviderType {
-    STRIPE = 'stripe',
-    ANTILOPAY = 'antilopay',
-    MANUAL = 'manual',
+  STRIPE = 'stripe',
+  ANTILOPAY = 'antilopay',
+  MANUAL = 'manual',
 }
 
 export enum PaymentStatusType {
-    PENDING = 'pending',
-    COMPLETED = 'completed',
-    FAILED = 'failed',
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
 }

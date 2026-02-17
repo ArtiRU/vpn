@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
@@ -16,7 +20,9 @@ export class SubscriptionsService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  async create(createSubscriptionDto: CreateSubscriptionDto): Promise<Subscription> {
+  async create(
+    createSubscriptionDto: CreateSubscriptionDto,
+  ): Promise<Subscription> {
     const { user_id, start_date, end_date, ...rest } = createSubscriptionDto;
 
     // Проверяем существование пользователя
@@ -67,7 +73,10 @@ export class SubscriptionsService {
     return subscription;
   }
 
-  async update(id: string, updateSubscriptionDto: UpdateSubscriptionDto): Promise<Subscription> {
+  async update(
+    id: string,
+    updateSubscriptionDto: UpdateSubscriptionDto,
+  ): Promise<Subscription> {
     const subscription = await this.subscriptionsRepository.findOne({
       where: { id },
       relations: ['user'],
@@ -78,7 +87,10 @@ export class SubscriptionsService {
     }
 
     // Если обновляется user_id, проверяем существование пользователя и устанавливаем объект user
-    if (updateSubscriptionDto.user_id && updateSubscriptionDto.user_id !== subscription.user?.id) {
+    if (
+      updateSubscriptionDto.user_id &&
+      updateSubscriptionDto.user_id !== subscription.user?.id
+    ) {
       const user = await this.usersRepository.findOne({
         where: { id: updateSubscriptionDto.user_id },
       });
@@ -86,13 +98,13 @@ export class SubscriptionsService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      
+
       subscription.user = user;
       delete updateSubscriptionDto.user_id; // Удаляем user_id из DTO, т.к. установили user
     }
 
     // Валидация дат
-    const startDate = updateSubscriptionDto.start_date 
+    const startDate = updateSubscriptionDto.start_date
       ? new Date(updateSubscriptionDto.start_date)
       : subscription.start_date;
     const endDate = updateSubscriptionDto.end_date
@@ -110,7 +122,10 @@ export class SubscriptionsService {
       updateSubscriptionDto.end_date = endDate;
     }
 
-    const updatedSubscription = Object.assign(subscription, updateSubscriptionDto);
+    const updatedSubscription = Object.assign(
+      subscription,
+      updateSubscriptionDto,
+    );
 
     return this.subscriptionsRepository.save(updatedSubscription);
   }
@@ -131,7 +146,6 @@ export class SubscriptionsService {
   }
 
   async findActiveByUserId(userId: string): Promise<Subscription | null> {
-    const now = new Date();
     return this.subscriptionsRepository.findOne({
       where: {
         user: { id: userId },

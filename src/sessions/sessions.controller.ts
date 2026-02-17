@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  ParseIntPipe,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { SessionsService } from './sessions.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
@@ -13,7 +30,11 @@ export class SessionsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new session' })
-  @ApiResponse({ status: 201, description: 'Session successfully created', type: Session })
+  @ApiResponse({
+    status: 201,
+    description: 'Session successfully created',
+    type: Session,
+  })
   @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
   @ApiResponse({ status: 404, description: 'User, Config or Server not found' })
   create(@Body() createSessionDto: CreateSessionDto) {
@@ -22,9 +43,21 @@ export class SessionsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all sessions' })
-  @ApiResponse({ status: 200, description: 'Return all sessions', type: [Session] })
-  @ApiQuery({ name: 'userId', required: false, description: 'Filter by user ID' })
-  @ApiQuery({ name: 'serverId', required: false, description: 'Filter by server ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return all sessions',
+    type: [Session],
+  })
+  @ApiQuery({
+    name: 'userId',
+    required: false,
+    description: 'Filter by user ID',
+  })
+  @ApiQuery({
+    name: 'serverId',
+    required: false,
+    description: 'Filter by server ID',
+  })
   findAll(
     @Query('userId') userId?: string,
     @Query('serverId') serverId?: string,
@@ -49,7 +82,11 @@ export class SessionsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update session by ID' })
-  @ApiResponse({ status: 200, description: 'Session successfully updated', type: Session })
+  @ApiResponse({
+    status: 200,
+    description: 'Session successfully updated',
+    type: Session,
+  })
   @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
   @ApiResponse({ status: 404, description: 'Session not found' })
   @ApiParam({ name: 'id', description: 'Session ID' })
@@ -59,7 +96,11 @@ export class SessionsController {
 
   @Patch(':id/disconnect')
   @ApiOperation({ summary: 'Mark session as disconnected' })
-  @ApiResponse({ status: 200, description: 'Session disconnected', type: Session })
+  @ApiResponse({
+    status: 200,
+    description: 'Session disconnected',
+    type: Session,
+  })
   @ApiResponse({ status: 404, description: 'Session not found' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   disconnect(@Param('id') id: string) {
@@ -68,7 +109,11 @@ export class SessionsController {
 
   @Patch(':id/traffic')
   @ApiOperation({ summary: 'Update session traffic' })
-  @ApiResponse({ status: 200, description: 'Session traffic updated', type: Session })
+  @ApiResponse({
+    status: 200,
+    description: 'Session traffic updated',
+    type: Session,
+  })
   @ApiResponse({ status: 404, description: 'Session not found' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   updateTraffic(
@@ -81,7 +126,11 @@ export class SessionsController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete session by ID' })
-  @ApiResponse({ status: 200, description: 'Session successfully deleted', type: Session })
+  @ApiResponse({
+    status: 200,
+    description: 'Session successfully deleted',
+    type: Session,
+  })
   @ApiResponse({ status: 404, description: 'Session not found' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   remove(@Param('id') id: string) {

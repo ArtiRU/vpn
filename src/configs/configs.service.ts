@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { CreateConfigDto } from './dto/create-config.dto';
@@ -6,7 +12,6 @@ import { UpdateConfigDto } from './dto/update-config.dto';
 import { Config } from './entities/config.entity';
 import { User } from '../users/entities/user.entity';
 import { Server } from '../servers/entities/server.entity';
-import { WireguardService } from '../wireguard/wireguard.service';
 
 @Injectable()
 export class ConfigsService {
@@ -19,7 +24,6 @@ export class ConfigsService {
     private readonly usersRepository: Repository<User>,
     @InjectRepository(Server)
     private readonly serversRepository: Repository<Server>,
-    private readonly wireguardService: WireguardService,
   ) {}
 
   async create(createConfigDto: CreateConfigDto): Promise<Config> {
@@ -42,14 +46,16 @@ export class ConfigsService {
     }
 
     const existingConfig = await this.configsRepository.findOne({
-      where: { 
+      where: {
         allocated_ip: configData.allocated_ip,
         server: { id: server_id },
       },
     });
 
     if (existingConfig) {
-      throw new ConflictException('This IP address is already allocated on this server');
+      throw new ConflictException(
+        'This IP address is already allocated on this server',
+      );
     }
 
     const config = this.configsRepository.create({
@@ -117,7 +123,10 @@ export class ConfigsService {
     }
 
     // Если обновляется user_id, проверяем существование пользователя
-    if (updateConfigDto.user_id && updateConfigDto.user_id !== config.user?.id) {
+    if (
+      updateConfigDto.user_id &&
+      updateConfigDto.user_id !== config.user?.id
+    ) {
       const user = await this.usersRepository.findOne({
         where: { id: updateConfigDto.user_id },
       });
@@ -131,7 +140,10 @@ export class ConfigsService {
     }
 
     // Если обновляется server_id, проверяем существование сервера
-    if (updateConfigDto.server_id && updateConfigDto.server_id !== config.server?.id) {
+    if (
+      updateConfigDto.server_id &&
+      updateConfigDto.server_id !== config.server?.id
+    ) {
       const server = await this.serversRepository.findOne({
         where: { id: updateConfigDto.server_id },
       });
@@ -145,16 +157,21 @@ export class ConfigsService {
     }
 
     // Если обновляется allocated_ip, проверяем уникальность
-    if (updateConfigDto.allocated_ip && updateConfigDto.allocated_ip !== config.allocated_ip) {
+    if (
+      updateConfigDto.allocated_ip &&
+      updateConfigDto.allocated_ip !== config.allocated_ip
+    ) {
       const existingConfig = await this.configsRepository.findOne({
-        where: { 
+        where: {
           allocated_ip: updateConfigDto.allocated_ip,
           server: { id: config.server.id },
         },
       });
 
       if (existingConfig && existingConfig.id !== id) {
-        throw new ConflictException('This IP address is already allocated on this server');
+        throw new ConflictException(
+          'This IP address is already allocated on this server',
+        );
       }
     }
 
@@ -187,25 +204,10 @@ export class ConfigsService {
       throw new NotFoundException('Config not found');
     }
 
-    // Попытка удалить peer из WireGuard сервера
-    try {
-      const serverUrl = this.wireguardService.createServerApiUrl(
-        config.server.hostname,
-        8080,
-      );
-      
-      // Извлекаем публичный ключ из config_body
-      const publicKeyMatch = config.config_body.match(/PublicKey\s*=\s*([^\s]+)/);
-      if (publicKeyMatch && publicKeyMatch[1]) {
-        await this.wireguardService.removeClient(publicKeyMatch[1], serverUrl);
-        this.logger.log(`Removed peer from WireGuard server: ${config.server.name}`);
-      }
-    } catch (error) {
-      this.logger.warn(`Failed to remove peer from WireGuard server: ${error.message}`);
-      // Продолжаем удаление из БД даже если не удалось удалить с сервера
-    }
-
+    // Note: For VLESS configs, removal should be handled by XrayManagerService
+    // This is a generic delete that works for all config types
     await this.configsRepository.delete(id);
+    this.logger.log(`Removed config ${id} from database`);
 
     return config;
   }

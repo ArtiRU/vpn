@@ -12,7 +12,6 @@ import { SessionsModule } from './sessions/sessions.module';
 import { ServerMetricsModule } from './server-metrics/server-metrics.module';
 import { AuthModule } from './auth/auth.module';
 import { ClientModule } from './client/client.module';
-import { WireguardModule } from './wireguard/wireguard.module';
 import { XrayModule } from './xray/xray.module';
 import configuration from './config/configuration';
 
@@ -22,10 +21,12 @@ import configuration from './config/configuration';
       isGlobal: true,
       load: [configuration],
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // Time to live in milliseconds (1 minute)
-      limit: 100, // Max requests per TTL
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // Time to live in milliseconds (1 minute)
+        limit: 100, // Max requests per TTL
+      },
+    ]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -50,7 +51,6 @@ import configuration from './config/configuration';
     ServerMetricsModule,
     AuthModule,
     ClientModule,
-    WireguardModule,
     XrayModule,
   ],
   controllers: [],

@@ -1,7 +1,14 @@
-import { registerDecorator, ValidationOptions, ValidationArguments } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
+} from 'class-validator';
 
-export function IsAfterDate(property: string, validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+export function IsAfterDate(
+  property: string,
+  validationOptions?: ValidationOptions,
+) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isAfterDate',
       target: object.constructor,
@@ -12,12 +19,12 @@ export function IsAfterDate(property: string, validationOptions?: ValidationOpti
         validate(value: any, args: ValidationArguments) {
           const [relatedPropertyName] = args.constraints;
           const relatedValue = (args.object as any)[relatedPropertyName];
-          
+
           if (!value || !relatedValue) return false;
-          
+
           const date = new Date(value);
           const relatedDate = new Date(relatedValue);
-          
+
           return date > relatedDate;
         },
         defaultMessage(args: ValidationArguments) {

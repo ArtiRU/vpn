@@ -1,10 +1,16 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Config } from '../configs/entities/config.entity';
 import { User } from '../users/entities/user.entity';
 import { Server } from '../servers/entities/server.entity';
 import { XrayService } from './xray.service';
+import { SUBSCRIPTION_STATUS } from '../subscriptions/subscriptions.constants';
 
 @Injectable()
 export class XrayManagerService {
@@ -39,15 +45,17 @@ export class XrayManagerService {
 
     // Проверяем активную подписку
     const activeSubscription = user.subscriptions?.find(
-      (sub: any) => sub.status === 'ACTIVE',
+      (sub: any) => sub.status === SUBSCRIPTION_STATUS.ACTIVE,
     );
 
     if (!activeSubscription) {
-      throw new BadRequestException('User does not have an active subscription');
+      throw new BadRequestException(
+        'User does not have an active subscription',
+      );
     }
 
     // Выбираем сервер
-    let server: Server;
+    let server: Server | null = null;
     if (serverId) {
       server = await this.serversRepository.findOne({
         where: { id: serverId, is_active: true },
@@ -181,11 +189,13 @@ export class XrayManagerService {
       const inbound = await this.xrayService.findVlessRealityInbound();
       if (inbound) {
         const clientEmail = config.private_key;
-        
+
         // Получаем список клиентов из inbound
         const settings = JSON.parse(inbound.settings);
-        const client = settings.clients?.find((c: any) => c.email === clientEmail);
-        
+        const client = settings.clients?.find(
+          (c: any) => c.email === clientEmail,
+        );
+
         if (client) {
           await this.xrayService.removeClient(inbound.id, client.id);
         }

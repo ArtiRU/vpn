@@ -15,7 +15,9 @@ export class ServerMetricsService {
     private readonly serversRepository: Repository<Server>,
   ) {}
 
-  async create(createServerMetricDto: CreateServerMetricDto): Promise<ServerMetric> {
+  async create(
+    createServerMetricDto: CreateServerMetricDto,
+  ): Promise<ServerMetric> {
     const { server_id, ...metricData } = createServerMetricDto;
 
     // Проверяем существование сервера
@@ -104,7 +106,10 @@ export class ServerMetricsService {
     return metric;
   }
 
-  async update(id: string, updateServerMetricDto: UpdateServerMetricDto): Promise<ServerMetric> {
+  async update(
+    id: string,
+    updateServerMetricDto: UpdateServerMetricDto,
+  ): Promise<ServerMetric> {
     const metric = await this.serverMetricsRepository.findOne({
       where: { id },
       relations: ['server'],
@@ -115,7 +120,10 @@ export class ServerMetricsService {
     }
 
     // Если обновляется server_id, проверяем существование сервера
-    if (updateServerMetricDto.server_id && updateServerMetricDto.server_id !== metric.server?.id) {
+    if (
+      updateServerMetricDto.server_id &&
+      updateServerMetricDto.server_id !== metric.server?.id
+    ) {
       const server = await this.serversRepository.findOne({
         where: { id: updateServerMetricDto.server_id },
       });
@@ -130,7 +138,9 @@ export class ServerMetricsService {
 
     // Конвертируем дату
     if (updateServerMetricDto.recorded_at) {
-      updateServerMetricDto.recorded_at = new Date(updateServerMetricDto.recorded_at);
+      updateServerMetricDto.recorded_at = new Date(
+        updateServerMetricDto.recorded_at,
+      );
     }
 
     const updatedMetric = Object.assign(metric, updateServerMetricDto);

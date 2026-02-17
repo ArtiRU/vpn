@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateServerDto } from './dto/create-server.dto';
@@ -20,7 +24,9 @@ export class ServersService {
     });
 
     if (existingServer) {
-      throw new ConflictException('Server with this hostname and port already exists');
+      throw new ConflictException(
+        'Server with this hostname and port already exists',
+      );
     }
 
     const server = this.serversRepository.create(createServerDto);
@@ -49,7 +55,7 @@ export class ServersService {
 
   async findByCountry(countryCode: string): Promise<Server[]> {
     return this.serversRepository.find({
-      where: { 
+      where: {
         country_code: countryCode.toUpperCase(),
         is_active: true,
       },
@@ -90,7 +96,9 @@ export class ServersService {
       });
 
       if (existingServer && existingServer.id !== id) {
-        throw new ConflictException('Server with this hostname and port already exists');
+        throw new ConflictException(
+          'Server with this hostname and port already exists',
+        );
       }
     }
 

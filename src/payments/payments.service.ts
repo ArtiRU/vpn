@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -9,9 +14,15 @@ import { Payment } from './entities/payment.entity';
 import { User } from '../users/entities/user.entity';
 import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { PaymentStatusType, PaymentProviderType } from './payments.type';
-import { CreateCheckoutSessionDto, CheckoutPlanType } from './dto/create-checkout-session.dto';
+import {
+  CreateCheckoutSessionDto,
+  CheckoutPlanType,
+} from './dto/create-checkout-session.dto';
 import { CheckoutSessionResponseDto } from './dto/checkout-session-response.dto';
-import { SubscriptionPlanType, SubscriptionStatusType } from '../subscriptions/subscriptions.type';
+import {
+  SubscriptionPlanType,
+  SubscriptionStatusType,
+} from '../subscriptions/subscriptions.type';
 
 @Injectable()
 export class PaymentsService {
@@ -58,7 +69,9 @@ export class PaymentsService {
     });
 
     if (existingPayment) {
-      throw new ConflictException('Payment with this transaction ID already exists');
+      throw new ConflictException(
+        'Payment with this transaction ID already exists',
+      );
     }
 
     const payment = this.paymentsRepository.create(paymentData);
@@ -134,7 +147,10 @@ export class PaymentsService {
     return payment;
   }
 
-  async update(id: string, updatePaymentDto: UpdatePaymentDto): Promise<Payment> {
+  async update(
+    id: string,
+    updatePaymentDto: UpdatePaymentDto,
+  ): Promise<Payment> {
     const payment = await this.paymentsRepository.findOne({
       where: { id },
       relations: ['user', 'subscription'],
@@ -144,7 +160,10 @@ export class PaymentsService {
       throw new NotFoundException('Payment not found');
     }
 
-    if (updatePaymentDto.user_id && updatePaymentDto.user_id !== payment.user?.id) {
+    if (
+      updatePaymentDto.user_id &&
+      updatePaymentDto.user_id !== payment.user?.id
+    ) {
       const user = await this.usersRepository.findOne({
         where: { id: updatePaymentDto.user_id },
       });
@@ -157,7 +176,10 @@ export class PaymentsService {
       delete updatePaymentDto.user_id;
     }
 
-    if (updatePaymentDto.subscription_id && updatePaymentDto.subscription_id !== payment.subscription?.id) {
+    if (
+      updatePaymentDto.subscription_id &&
+      updatePaymentDto.subscription_id !== payment.subscription?.id
+    ) {
       const subscription = await this.subscriptionsRepository.findOne({
         where: { id: updatePaymentDto.subscription_id },
       });
@@ -170,13 +192,18 @@ export class PaymentsService {
       delete updatePaymentDto.subscription_id;
     }
 
-    if (updatePaymentDto.transaction_id && updatePaymentDto.transaction_id !== payment.transaction_id) {
+    if (
+      updatePaymentDto.transaction_id &&
+      updatePaymentDto.transaction_id !== payment.transaction_id
+    ) {
       const existingPayment = await this.paymentsRepository.findOne({
         where: { transaction_id: updatePaymentDto.transaction_id },
       });
 
       if (existingPayment && existingPayment.id !== id) {
-        throw new ConflictException('Payment with this transaction ID already exists');
+        throw new ConflictException(
+          'Payment with this transaction ID already exists',
+        );
       }
     }
 
@@ -208,7 +235,10 @@ export class PaymentsService {
 
   // Stripe Integration Methods
 
-  async createCheckoutSession(userId: string, createCheckoutDto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponseDto> {
+  async createCheckoutSession(
+    userId: string,
+    createCheckoutDto: CreateCheckoutSessionDto,
+  ): Promise<CheckoutSessionResponseDto> {
     if (!this.stripe) {
       throw new BadRequestException('Stripe is not configured');
     }
@@ -222,12 +252,15 @@ export class PaymentsService {
     }
 
     // Get price ID based on plan
-    const priceId = createCheckoutDto.plan === CheckoutPlanType.MONTHLY
-      ? this.configService.get<string>('stripe.monthlyPriceId')
-      : this.configService.get<string>('stripe.yearlyPriceId');
+    const priceId =
+      createCheckoutDto.plan === CheckoutPlanType.MONTHLY
+        ? this.configService.get<string>('stripe.monthlyPriceId')
+        : this.configService.get<string>('stripe.yearlyPriceId');
 
     if (!priceId) {
-      throw new BadRequestException(`Price ID not configured for ${createCheckoutDto.plan} plan`);
+      throw new BadRequestException(
+        `Price ID not configured for ${createCheckoutDto.plan} plan`,
+      );
     }
 
     // Create Stripe Checkout Session
@@ -240,8 +273,12 @@ export class PaymentsService {
         },
       ],
       mode: 'subscription',
-      success_url: createCheckoutDto.success_url || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: createCheckoutDto.cancel_url || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/cancel`,
+      success_url:
+        createCheckoutDto.success_url ||
+        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:
+        createCheckoutDto.cancel_url ||
+        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/cancel`,
       customer_email: user.email,
       metadata: {
         userId: user.id,
@@ -260,7 +297,9 @@ export class PaymentsService {
       throw new BadRequestException('Stripe is not configured');
     }
 
-    const webhookSecret = this.configService.get<string>('stripe.webhookSecret');
+    const webhookSecret = this.configService.get<string>(
+      'stripe.webhookSecret',
+    );
     if (!webhookSecret) {
       throw new BadRequestException('Stripe webhook secret not configured');
     }
@@ -268,31 +307,39 @@ export class PaymentsService {
     let event: Stripe.Event;
 
     try {
-      event = this.stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+      event = this.stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        webhookSecret,
+      );
     } catch (err: any) {
-      throw new BadRequestException(`Webhook signature verification failed: ${err.message}`);
+      throw new BadRequestException(
+        `Webhook signature verification failed: ${err.message}`,
+      );
     }
 
     // Handle different event types
     switch (event.type) {
       case 'checkout.session.completed':
-        await this.handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        await this.handleCheckoutSessionCompleted(event.data.object);
         break;
       case 'invoice.payment_succeeded':
-        await this.handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+        await this.handleInvoicePaymentSucceeded(event.data.object);
         break;
       case 'invoice.payment_failed':
-        await this.handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        await this.handleInvoicePaymentFailed(event.data.object);
         break;
       case 'customer.subscription.deleted':
-        await this.handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        await this.handleSubscriptionDeleted(event.data.object);
         break;
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
   }
 
-  private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<void> {
+  private async handleCheckoutSessionCompleted(
+    session: Stripe.Checkout.Session,
+  ): Promise<void> {
     const userId = session.metadata?.userId;
     const plan = session.metadata?.plan as CheckoutPlanType;
 
@@ -311,7 +358,10 @@ export class PaymentsService {
     }
 
     // Create subscription
-    const planType = plan === CheckoutPlanType.MONTHLY ? SubscriptionPlanType.MONTHLY : SubscriptionPlanType.YEARLY;
+    const planType =
+      plan === CheckoutPlanType.MONTHLY
+        ? SubscriptionPlanType.MONTHLY
+        : SubscriptionPlanType.YEARLY;
     const duration = plan === CheckoutPlanType.MONTHLY ? 30 : 365;
 
     const startDate = new Date();
@@ -327,7 +377,8 @@ export class PaymentsService {
       status: SubscriptionStatusType.ACTIVE,
     });
 
-    const savedSubscription = await this.subscriptionsRepository.save(subscription);
+    const savedSubscription =
+      await this.subscriptionsRepository.save(subscription);
 
     // Create payment record
     const payment = this.paymentsRepository.create({
@@ -336,24 +387,30 @@ export class PaymentsService {
       amount: session.amount_total ? session.amount_total / 100 : 0,
       currency: (session.currency || 'usd').toUpperCase(),
       provider: PaymentProviderType.STRIPE,
-      transaction_id: session.payment_intent as string || session.id,
+      transaction_id: (session.payment_intent as string) || session.id,
       status: PaymentStatusType.COMPLETED,
     });
 
     await this.paymentsRepository.save(payment);
   }
 
-  private async handleInvoicePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
+  private async handleInvoicePaymentSucceeded(
+    invoice: Stripe.Invoice,
+  ): Promise<void> {
     // Handle recurring payment success
     console.log('Invoice payment succeeded:', invoice.id);
   }
 
-  private async handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
+  private async handleInvoicePaymentFailed(
+    invoice: Stripe.Invoice,
+  ): Promise<void> {
     // Handle payment failure
     console.log('Invoice payment failed:', invoice.id);
   }
 
-  private async handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
+  private async handleSubscriptionDeleted(
+    subscription: Stripe.Subscription,
+  ): Promise<void> {
     // Handle subscription cancellation
     console.log('Subscription deleted:', subscription.id);
   }
