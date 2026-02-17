@@ -3,9 +3,11 @@ import { ServersService } from '../servers/servers.service';
 import { ConfigsService } from '../configs/configs.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { WireguardManagerService } from '../wireguard/wireguard-manager.service';
+import { XrayManagerService } from '../xray/xray-manager.service';
 import { ServerInfoDto } from './dto/server-info.dto';
 import { SubscriptionStatusDto } from './dto/subscription-status.dto';
 import { VpnConfigDto } from './dto/vpn-config.dto';
+import { ProtocolType } from '../servers/servers.type';
 
 @Injectable()
 export class ClientService {
@@ -14,6 +16,7 @@ export class ClientService {
         private readonly configsService: ConfigsService,
         private readonly subscriptionsService: SubscriptionsService,
         private readonly wireguardManager: WireguardManagerService,
+        private readonly xrayManager: XrayManagerService,
     ) {}
 
     async getAvailableServers(): Promise<ServerInfoDto[]> {
@@ -87,8 +90,27 @@ export class ClientService {
             throw new ForbiddenException('Active subscription required to get VPN configuration');
         }
 
-        // Получаем или создаем конфигурацию автоматически
-        const config = await this.wireguardManager.getOrCreateConfig(userId, serverId, countryCode);
+        // Определяем протокол сервера
+        let server = null;
+        if (serverId) {
+            server = await this.serversService.findOne(serverId);
+            if (!server) {
+                throw new NotFoundException('Server not found');
+            }
+        }
+
+        // По умолчанию используем VLESS (более современный и обфусцированный)
+        const protocol = server?.protocol || ProtocolType.VLESS;
+
+        let config;
+        if (protocol === ProtocolType.VLESS) {
+            // Используем Xray для VLESS
+            const result = await this.xrayManager.getOrCreateVlessConfig(userId, serverId);
+            config = result.config;
+        } else {
+            // Используем WireGuard для legacy
+            config = await this.wireguardManager.getOrCreateConfig(userId, serverId, countryCode);
+        }
 
         // Check if config is expired
         if (config.expires_at < new Date()) {
