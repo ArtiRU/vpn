@@ -135,12 +135,19 @@ export class XrayService {
     const inbounds = await this.getInbounds();
 
     // Ищем включенный VLESS inbound с Reality
-    const vlessInbound = inbounds.find(
-      (inbound) =>
-        inbound.enable &&
-        inbound.protocol === 'vless' &&
-        inbound.streamSettings?.security === 'reality',
-    );
+    const vlessInbound = inbounds.find((inbound) => {
+      if (!inbound.enable || inbound.protocol !== 'vless') return false;
+
+      try {
+        const streamSettings =
+          typeof inbound.streamSettings === 'string'
+            ? JSON.parse(inbound.streamSettings)
+            : inbound.streamSettings;
+        return streamSettings?.security === 'reality';
+      } catch {
+        return false;
+      }
+    });
 
     return vlessInbound || null;
   }
