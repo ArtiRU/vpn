@@ -26,7 +26,7 @@ import { VpnConfigDto } from './dto/vpn-config.dto';
 @ApiTags('Client API')
 @Controller('client')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @UseInterceptors(ClassSerializerInterceptor)
 export class ClientController {
   constructor(private readonly clientService: ClientService) {}

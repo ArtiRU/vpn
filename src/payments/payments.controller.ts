@@ -169,7 +169,7 @@ export class PaymentsController {
 
   @Post('checkout/create-session')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create Stripe checkout session' })
   @ApiResponse({
     status: 201,
