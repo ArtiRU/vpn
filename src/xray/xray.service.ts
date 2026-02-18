@@ -105,9 +105,8 @@ export class XrayService {
     try {
       const session = await this.getSession();
 
-      const response = await this.axiosInstance.post(
+      const response = await this.axiosInstance.get(
         '/panel/api/inbounds/list',
-        {},
         {
           headers: {
             Cookie: session,
