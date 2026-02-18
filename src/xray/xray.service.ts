@@ -238,18 +238,22 @@ export class XrayService {
       }
 
       // Формируем vless:// ссылку
-      const streamSettings = inbound.streamSettings;
+      const streamSettings =
+        typeof inbound.streamSettings === 'string'
+          ? JSON.parse(inbound.streamSettings)
+          : inbound.streamSettings;
       const realitySettings = streamSettings.realitySettings;
+      const realityConfig = realitySettings.settings || realitySettings;
 
       const params = new URLSearchParams({
         type: streamSettings.network || 'tcp',
         encryption: 'none',
         security: 'reality',
-        pbk: realitySettings.publicKey,
-        fp: realitySettings.fingerprint || 'chrome',
+        pbk: realityConfig.publicKey,
+        fp: realityConfig.fingerprint || 'chrome',
         sni: realitySettings.serverNames?.[0] || 'github.com',
         sid: realitySettings.shortIds?.[0] || '',
-        spx: realitySettings.spiderX || '/',
+        spx: realityConfig.spiderX || '/',
       });
 
       const vlessLink = `vless://${client.id}@${this.getPublicIP()}:${inbound.port}?${params.toString()}#${inbound.remark}-${email}`;
