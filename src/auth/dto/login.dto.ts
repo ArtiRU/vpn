@@ -13,7 +13,7 @@ export class LoginDto {
   @ApiProperty({
     example: 'Ice8666099!',
     description: 'User password',
-    minLength: 6,
+    minLength: 7,
   })
   @IsString()
   @IsNotEmpty()
