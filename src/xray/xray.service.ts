@@ -220,7 +220,7 @@ export class XrayService {
   /**
    * Получить конфигурацию клиента (ссылку vless://)
    */
-  async getClientConfig(inboundId: number, email: string): Promise<string> {
+  async getClientConfig(inboundId: number, email: string, serverHostname?: string): Promise<string> {
     try {
       const inbounds = await this.getInbounds();
       const inbound = inbounds.find((i) => i.id === inboundId);
@@ -256,7 +256,8 @@ export class XrayService {
         spx: realityConfig.spiderX || '/',
       });
 
-      const vlessLink = `vless://${client.id}@${this.getPublicIP()}:${inbound.port}?${params.toString()}#${inbound.remark}-${email}`;
+      const host = serverHostname || this.getPublicIP();
+      const vlessLink = `vless://${client.id}@${host}:${inbound.port}?${params.toString()}#${inbound.remark}-${email}`;
 
       return vlessLink;
     } catch (error) {

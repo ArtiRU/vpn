@@ -102,6 +102,7 @@ export class XrayManagerService {
     const vlessLink = await this.xrayService.getClientConfig(
       inbound.id,
       clientEmail,
+      server.hostname,
     );
 
     // Сохраняем в базу данных
