@@ -254,6 +254,7 @@ export class XrayService {
         sni: realitySettings.serverNames?.[0] || 'github.com',
         sid: realitySettings.shortIds?.[0] || '',
         spx: realityConfig.spiderX || '/',
+        flow: 'xtls-rprx-vision',
       });
 
       const host = serverHostname || this.getPublicIP();
