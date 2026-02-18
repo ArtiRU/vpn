@@ -135,29 +135,24 @@ export class XrayManagerService {
     // Проверяем существующую конфигурацию
     let config: Config | null;
 
+    const queryBuilder = this.configsRepository
+      .createQueryBuilder('config')
+      .leftJoinAndSelect('config.user', 'user')
+      .leftJoinAndSelect('config.server', 'server')
+      .where('config.user.id = :userId', { userId })
+      .andWhere('config.allocated_ip LIKE :pattern', { pattern: 'xray-%' })
+      .andWhere('config.expires_at > :now', { now: new Date() });
+
     if (serverId) {
-      config = await this.configsRepository.findOne({
-        where: {
-          user: { id: userId },
-          server: { id: serverId },
-          allocated_ip: { $like: 'xray-%' } as any,
-        },
-        relations: ['user', 'server'],
-        order: { created_at: 'DESC' },
-      });
-    } else {
-      config = await this.configsRepository.findOne({
-        where: {
-          user: { id: userId },
-          allocated_ip: { $like: 'xray-%' } as any,
-        },
-        relations: ['user', 'server'],
-        order: { created_at: 'DESC' },
-      });
+      queryBuilder.andWhere('config.server.id = :serverId', { serverId });
     }
 
+    config = await queryBuilder
+      .orderBy('config.created_at', 'DESC')
+      .getOne();
+
     // Если конфигурация существует и не истекла
-    if (config && new Date(config.expires_at) > new Date()) {
+    if (config) {
       config.last_used = new Date();
       await this.configsRepository.save(config);
 

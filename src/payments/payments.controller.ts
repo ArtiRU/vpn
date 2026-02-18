@@ -8,10 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
-  Headers,
-  Req,
 } from '@nestjs/common';
-import type { RawBodyRequest } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -32,7 +29,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { Public } from '../auth/decorators/public.decorator';
-import type { Request } from 'express';
 
 @ApiTags('Payments')
 @ApiBearerAuth('JWT-auth')
@@ -165,15 +161,15 @@ export class PaymentsController {
     return this.paymentsService.remove(id);
   }
 
-  // Stripe Integration Endpoints
+  // YooKassa Integration Endpoints
 
   @Post('checkout/create-session')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Create Stripe checkout session' })
+  @ApiOperation({ summary: 'Create YooKassa payment session' })
   @ApiResponse({
     status: 201,
-    description: 'Checkout session created',
+    description: 'Payment session created',
     type: CheckoutSessionResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -189,24 +185,31 @@ export class PaymentsController {
     );
   }
 
-  @Post('webhook/stripe')
+  @Post('webhook/yookassa')
   @Public()
   @SkipThrottle()
-  @ApiOperation({ summary: 'Stripe webhook endpoint' })
+  @ApiOperation({ summary: 'YooKassa webhook endpoint' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
   @ApiResponse({
     status: 400,
-    description: 'Webhook signature verification failed',
+    description: 'Webhook processing failed',
   })
-  async handleStripeWebhook(
-    @Headers('stripe-signature') signature: string,
-    @Req() req: RawBodyRequest<Request>,
+  async handleYooKassaWebhook(
+    @Body() payload: any,
   ): Promise<{ received: boolean }> {
-    const rawBody = req.rawBody;
-    if (!rawBody) {
-      throw new Error('Raw body not available');
-    }
-    await this.paymentsService.handleStripeWebhook(signature, rawBody);
+    await this.paymentsService.handleYooKassaWebhook(payload);
     return { received: true };
+  }
+
+  @Get('status/:paymentId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get payment status from YooKassa' })
+  @ApiResponse({ status: 200, description: 'Payment status retrieved' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiParam({ name: 'paymentId', description: 'YooKassa Payment ID' })
+  getPaymentStatus(@Param('paymentId') paymentId: string) {
+    return this.paymentsService.getPaymentStatus(paymentId);
   }
 }

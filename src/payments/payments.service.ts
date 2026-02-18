@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import Stripe from 'stripe';
+import { YooCheckout, ICreatePayment } from '@a2seven/yoo-checkout';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Payment } from './entities/payment.entity';
@@ -26,7 +26,7 @@ import {
 
 @Injectable()
 export class PaymentsService {
-  private stripe: Stripe;
+  private yooCheckout: YooCheckout;
 
   constructor(
     @InjectRepository(Payment)
@@ -37,10 +37,13 @@ export class PaymentsService {
     private readonly subscriptionsRepository: Repository<Subscription>,
     private readonly configService: ConfigService,
   ) {
-    const stripeApiKey = this.configService.get<string>('stripe.apiKey');
-    if (stripeApiKey) {
-      this.stripe = new Stripe(stripeApiKey, {
-        apiVersion: '2026-01-28.clover',
+    const shopId = this.configService.get<string>('yookassa.shopId');
+    const secretKey = this.configService.get<string>('yookassa.secretKey');
+    
+    if (shopId && secretKey) {
+      this.yooCheckout = new YooCheckout({
+        shopId,
+        secretKey,
       });
     }
   }
@@ -233,14 +236,14 @@ export class PaymentsService {
     return payment;
   }
 
-  // Stripe Integration Methods
+  // YooKassa Integration Methods
 
   async createCheckoutSession(
     userId: string,
     createCheckoutDto: CreateCheckoutSessionDto,
   ): Promise<CheckoutSessionResponseDto> {
-    if (!this.stripe) {
-      throw new BadRequestException('Stripe is not configured');
+    if (!this.yooCheckout) {
+      throw new BadRequestException('YooKassa is not configured');
     }
 
     const user = await this.usersRepository.findOne({
@@ -251,105 +254,119 @@ export class PaymentsService {
       throw new NotFoundException('User not found');
     }
 
-    // Get price ID based on plan
-    const priceId =
+    // Get price based on plan
+    const amount =
       createCheckoutDto.plan === CheckoutPlanType.MONTHLY
-        ? this.configService.get<string>('stripe.monthlyPriceId')
-        : this.configService.get<string>('stripe.yearlyPriceId');
+        ? parseFloat(this.configService.get<string>('yookassa.monthlyPrice') || '500')
+        : parseFloat(this.configService.get<string>('yookassa.yearlyPrice') || '5000');
 
-    if (!priceId) {
-      throw new BadRequestException(
-        `Price ID not configured for ${createCheckoutDto.plan} plan`,
-      );
-    }
+    const currency = this.configService.get<string>('yookassa.currency') || 'RUB';
 
-    // Create Stripe Checkout Session
-    const session = await this.stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: 'subscription',
-      success_url:
-        createCheckoutDto.success_url ||
-        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:
-        createCheckoutDto.cancel_url ||
-        `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/cancel`,
-      customer_email: user.email,
-      metadata: {
-        userId: user.id,
-        plan: createCheckoutDto.plan,
+    // Create payment in YooKassa
+    const idempotenceKey = `${userId}-${Date.now()}`;
+    
+    const createPayload: ICreatePayment = {
+      amount: {
+        value: amount.toFixed(2),
+        currency: currency,
       },
-    });
-
-    return {
-      url: session.url || '',
-      sessionId: session.id,
+      confirmation: {
+        type: 'redirect',
+        return_url:
+          createCheckoutDto.return_url ||
+          `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment/success`,
+      },
+      capture: true,
+      description: `Subscription ${createCheckoutDto.plan} plan for user ${user.email}`,
+      metadata: {
+        user_id: userId,
+        plan: createCheckoutDto.plan,
+        email: user.email,
+      },
     };
-  }
-
-  async handleStripeWebhook(signature: string, rawBody: Buffer): Promise<void> {
-    if (!this.stripe) {
-      throw new BadRequestException('Stripe is not configured');
-    }
-
-    const webhookSecret = this.configService.get<string>(
-      'stripe.webhookSecret',
-    );
-    if (!webhookSecret) {
-      throw new BadRequestException('Stripe webhook secret not configured');
-    }
-
-    let event: Stripe.Event;
 
     try {
-      event = this.stripe.webhooks.constructEvent(
-        rawBody,
-        signature,
-        webhookSecret,
+      const payment = await this.yooCheckout.createPayment(
+        createPayload,
+        idempotenceKey,
       );
-    } catch (err: any) {
-      throw new BadRequestException(
-        `Webhook signature verification failed: ${err.message}`,
-      );
-    }
 
-    // Handle different event types
-    switch (event.type) {
-      case 'checkout.session.completed':
-        await this.handleCheckoutSessionCompleted(event.data.object);
-        break;
-      case 'invoice.payment_succeeded':
-        await this.handleInvoicePaymentSucceeded(event.data.object);
-        break;
-      case 'invoice.payment_failed':
-        await this.handleInvoicePaymentFailed(event.data.object);
-        break;
-      case 'customer.subscription.deleted':
-        await this.handleSubscriptionDeleted(event.data.object);
-        break;
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+      // Create payment record in database with pending status
+      await this.paymentsRepository.save(
+        this.paymentsRepository.create({
+          user: user,
+          amount: amount,
+          currency: currency,
+          provider: PaymentProviderType.YOOKASSA,
+          transaction_id: payment.id,
+          status: PaymentStatusType.PENDING,
+        }),
+      );
+
+      return {
+        url: payment.confirmation?.confirmation_url || '',
+        sessionId: payment.id,
+      };
+    } catch (error: any) {
+      throw new BadRequestException(
+        `Failed to create payment: ${error.message}`,
+      );
     }
   }
 
-  private async handleCheckoutSessionCompleted(
-    session: Stripe.Checkout.Session,
-  ): Promise<void> {
-    const userId = session.metadata?.userId;
-    const plan = session.metadata?.plan as CheckoutPlanType;
+  async handleYooKassaWebhook(payload: any): Promise<void> {
+    if (!this.yooCheckout) {
+      throw new BadRequestException('YooKassa is not configured');
+    }
 
-    if (!userId || !plan) {
-      console.error('Missing metadata in checkout session');
+    const event = payload.event;
+    const paymentObject = payload.object;
+
+    switch (event) {
+      case 'payment.succeeded':
+        await this.handlePaymentSucceeded(paymentObject);
+        break;
+      case 'payment.waiting_for_capture':
+        await this.handlePaymentWaitingForCapture(paymentObject);
+        break;
+      case 'payment.canceled':
+        await this.handlePaymentCanceled(paymentObject);
+        break;
+      default:
+        console.log(`Unhandled event type: ${event}`);
+    }
+  }
+
+  private async handlePaymentSucceeded(paymentObject: any): Promise<void> {
+    const paymentId = paymentObject.id;
+    const metadata = paymentObject.metadata;
+
+    if (!metadata?.user_id || !metadata?.plan) {
+      console.error('Missing metadata in payment object');
       return;
     }
 
+    const userId = metadata.user_id;
+    const plan = metadata.plan as CheckoutPlanType;
+
+    // Find and update payment record
+    const payment = await this.paymentsRepository.findOne({
+      where: { transaction_id: paymentId },
+      relations: ['user'],
+    });
+
+    if (!payment) {
+      console.error(`Payment not found: ${paymentId}`);
+      return;
+    }
+
+    payment.status = PaymentStatusType.COMPLETED;
+    await this.paymentsRepository.save(payment);
+
+    // Create or extend subscription
     const user = await this.usersRepository.findOne({
       where: { id: userId },
+      relations: ['subscriptions'],
     });
 
     if (!user) {
@@ -357,61 +374,102 @@ export class PaymentsService {
       return;
     }
 
-    // Create subscription
     const planType =
       plan === CheckoutPlanType.MONTHLY
         ? SubscriptionPlanType.MONTHLY
         : SubscriptionPlanType.YEARLY;
     const duration = plan === CheckoutPlanType.MONTHLY ? 30 : 365;
 
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + duration);
-
-    const subscription = this.subscriptionsRepository.create({
-      user: user,
-      plan_name: planType,
-      start_date: startDate,
-      end_date: endDate,
-      auto_renew: true,
-      status: SubscriptionStatusType.ACTIVE,
+    // Check if user has an active subscription
+    const activeSubscription = await this.subscriptionsRepository.findOne({
+      where: {
+        user: { id: userId },
+        status: SubscriptionStatusType.ACTIVE,
+      },
+      order: {
+        end_date: 'DESC',
+      },
     });
 
-    const savedSubscription =
-      await this.subscriptionsRepository.save(subscription);
+    let startDate: Date;
+    let endDate: Date;
 
-    // Create payment record
-    const payment = this.paymentsRepository.create({
-      user: user,
-      subscription: savedSubscription,
-      amount: session.amount_total ? session.amount_total / 100 : 0,
-      currency: (session.currency || 'usd').toUpperCase(),
-      provider: PaymentProviderType.STRIPE,
-      transaction_id: (session.payment_intent as string) || session.id,
-      status: PaymentStatusType.COMPLETED,
+    if (activeSubscription && activeSubscription.end_date > new Date()) {
+      // Extend existing subscription
+      startDate = activeSubscription.end_date;
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + duration);
+
+      activeSubscription.end_date = endDate;
+      await this.subscriptionsRepository.save(activeSubscription);
+
+      // Update payment to link with existing subscription
+      payment.subscription = activeSubscription;
+      await this.paymentsRepository.save(payment);
+    } else {
+      // Create new subscription
+      startDate = new Date();
+      endDate = new Date();
+      endDate.setDate(endDate.getDate() + duration);
+
+      const subscription = this.subscriptionsRepository.create({
+        user: user,
+        plan_name: planType,
+        start_date: startDate,
+        end_date: endDate,
+        auto_renew: false,
+        status: SubscriptionStatusType.ACTIVE,
+      });
+
+      const savedSubscription =
+        await this.subscriptionsRepository.save(subscription);
+
+      // Update payment to link with new subscription
+      payment.subscription = savedSubscription;
+      await this.paymentsRepository.save(payment);
+    }
+  }
+
+  private async handlePaymentWaitingForCapture(
+    paymentObject: any,
+  ): Promise<void> {
+    const paymentId = paymentObject.id;
+
+    const payment = await this.paymentsRepository.findOne({
+      where: { transaction_id: paymentId },
     });
 
-    await this.paymentsRepository.save(payment);
+    if (payment) {
+      payment.status = PaymentStatusType.WAITING_FOR_CAPTURE;
+      await this.paymentsRepository.save(payment);
+    }
   }
 
-  private async handleInvoicePaymentSucceeded(
-    invoice: Stripe.Invoice,
-  ): Promise<void> {
-    // Handle recurring payment success
-    console.log('Invoice payment succeeded:', invoice.id);
+  private async handlePaymentCanceled(paymentObject: any): Promise<void> {
+    const paymentId = paymentObject.id;
+
+    const payment = await this.paymentsRepository.findOne({
+      where: { transaction_id: paymentId },
+    });
+
+    if (payment) {
+      payment.status = PaymentStatusType.CANCELED;
+      await this.paymentsRepository.save(payment);
+    }
   }
 
-  private async handleInvoicePaymentFailed(
-    invoice: Stripe.Invoice,
-  ): Promise<void> {
-    // Handle payment failure
-    console.log('Invoice payment failed:', invoice.id);
-  }
+  // Get payment status from YooKassa
+  async getPaymentStatus(paymentId: string): Promise<any> {
+    if (!this.yooCheckout) {
+      throw new BadRequestException('YooKassa is not configured');
+    }
 
-  private async handleSubscriptionDeleted(
-    subscription: Stripe.Subscription,
-  ): Promise<void> {
-    // Handle subscription cancellation
-    console.log('Subscription deleted:', subscription.id);
+    try {
+      return await this.yooCheckout.getPayment(paymentId);
+    } catch (error: any) {
+      throw new BadRequestException(
+        `Failed to get payment status: ${error.message}`,
+      );
+    }
   }
 }

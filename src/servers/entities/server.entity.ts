@@ -27,22 +27,27 @@ export class Server {
   @Column({ type: 'varchar', length: 255 })
   city: string;
 
-  @ApiProperty({ example: 'vpn.example.com' })
+  @ApiProperty({ example: 'de1.vpn.example.com' })
   @Column({ type: 'varchar', length: 255 })
   hostname: string;
 
-  @ApiProperty({ example: 51820 })
-  @Column({ type: 'int' })
+  @ApiProperty({ example: 443, description: 'VLESS Reality port (usually 443)' })
+  @Column({ type: 'int', default: 443 })
   port: number;
 
-  @ApiProperty({ enum: ProtocolType, example: ProtocolType.WIREGUARD })
+  @ApiProperty({ enum: ProtocolType, example: ProtocolType.VLESS })
   @Column({
     type: 'enum',
     enum: ProtocolType,
+    default: ProtocolType.VLESS,
   })
   protocol: ProtocolType;
 
-  @ApiProperty({ example: 'public_key_here...', nullable: true })
+  @ApiProperty({ 
+    example: 'github.com:443', 
+    description: 'Reality destination (SNI:port)',
+    nullable: true 
+  })
   @Column({ type: 'text', nullable: true })
   public_key: string;
 

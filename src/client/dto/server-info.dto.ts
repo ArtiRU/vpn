@@ -13,13 +13,13 @@ export class ServerInfoDto {
   @ApiProperty({ example: 'Frankfurt' })
   city: string;
 
-  @ApiProperty({ example: 'vpn.example.com' })
+  @ApiProperty({ example: 'de1.vpn.example.com' })
   hostname: string;
 
-  @ApiProperty({ example: 51820 })
+  @ApiProperty({ example: 443 })
   port: number;
 
-  @ApiProperty({ example: 'wireguard' })
+  @ApiProperty({ example: 'vless' })
   protocol: string;
 
   @ApiProperty({ example: 45 })

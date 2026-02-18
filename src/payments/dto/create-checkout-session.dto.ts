@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsString, IsEnum, IsOptional } from 'class-validator';
 
 export enum CheckoutPlanType {
   MONTHLY = 'monthly',
@@ -17,18 +17,11 @@ export class CreateCheckoutSessionDto {
   plan: CheckoutPlanType;
 
   @ApiProperty({
-    example: 'https://example.com/success',
+    example: 'https://example.com/payment/success',
     description: 'URL to redirect after successful payment',
     required: false,
   })
   @IsString()
-  success_url?: string;
-
-  @ApiProperty({
-    example: 'https://example.com/cancel',
-    description: 'URL to redirect after cancelled payment',
-    required: false,
-  })
-  @IsString()
-  cancel_url?: string;
+  @IsOptional()
+  return_url?: string;
 }

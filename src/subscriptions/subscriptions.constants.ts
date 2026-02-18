@@ -16,10 +16,10 @@ export const SUBSCRIPTION_PLAN = {
   TRIAL: 'TRIAL',
 } as const;
 
-// Цены подписок (в центах/копейках для Stripe)
+// Цены подписок (в рублях для ЮКассы)
 export const SUBSCRIPTION_PRICES = {
-  MONTHLY: 999, // $9.99
-  YEARLY: 9999, // $99.99
+  MONTHLY: 500, // 500 рублей
+  YEARLY: 5000, // 5000 рублей
   TRIAL: 0, // Бесплатно
 } as const;
 
@@ -30,14 +30,14 @@ export const SUBSCRIPTION_DURATION = {
   TRIAL: 7,
 } as const;
 
-// Минимальная активная длительность handshake для WireGuard/VLESS (в минутах)
+// Минимальная активная длительность handshake для VLESS (в минутах)
 export const ACTIVE_CONNECTION_TIMEOUT_MINUTES = 3;
 
 // Максимальное количество подключений на сервер
 export const MAX_CONNECTIONS_PER_SERVER = 100;
 
-// Порт по умолчанию для WireGuard Management API
-export const WIREGUARD_DEFAULT_PORT = 8080;
+// Порт по умолчанию для 3X-UI Management API
+export const XRAY_DEFAULT_PORT = 2053;
 
 // Таймауты для API запросов (в миллисекундах)
 export const API_TIMEOUT = {

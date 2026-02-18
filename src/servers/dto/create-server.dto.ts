@@ -41,7 +41,7 @@ export class CreateServerDto {
 
   @ApiProperty({
     description: 'Server hostname (IP or domain)',
-    example: 'vpn.example.com',
+    example: 'de1.vpn.example.com',
     required: true,
   })
   @IsString()
@@ -49,27 +49,31 @@ export class CreateServerDto {
   hostname: string;
 
   @ApiProperty({
-    description: 'Server port',
-    example: 51820,
-    required: true,
+    description: 'VLESS Reality port (usually 443)',
+    example: 443,
+    default: 443,
+    required: false,
   })
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(65535)
-  port: number;
+  port?: number;
 
   @ApiProperty({
-    description: 'VPN protocol',
+    description: 'VPN protocol (only VLESS Reality supported)',
     enum: ProtocolType,
-    example: ProtocolType.WIREGUARD,
-    required: true,
+    example: ProtocolType.VLESS,
+    default: ProtocolType.VLESS,
+    required: false,
   })
+  @IsOptional()
   @IsEnum(ProtocolType)
-  protocol: ProtocolType;
+  protocol?: ProtocolType;
 
   @ApiProperty({
-    description: 'Public key (for WireGuard)',
-    example: 'public_key_here...',
+    description: 'Reality destination SNI (e.g., github.com:443)',
+    example: 'github.com:443',
     required: false,
   })
   @IsOptional()

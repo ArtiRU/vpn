@@ -23,15 +23,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Use json parser with increased limit, but preserve raw body for webhooks
-  app.use(
-    '/payments/webhook/stripe',
-    json({
-      verify: (req: any, res, buf) => {
-        req.rawBody = buf;
-      },
-    }),
-  );
+  // Use json parser with increased limit
   app.use(json({ limit: '10mb' }));
 
   // Global exception filter

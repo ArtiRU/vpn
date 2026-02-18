@@ -47,7 +47,7 @@ export class CreatePaymentDto {
   @ApiProperty({
     description: 'Payment provider',
     enum: PaymentProviderType,
-    example: PaymentProviderType.STRIPE,
+    example: PaymentProviderType.YOOKASSA,
     required: true,
   })
   @IsEnum(PaymentProviderType)

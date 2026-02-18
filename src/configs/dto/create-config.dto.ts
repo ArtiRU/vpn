@@ -3,7 +3,6 @@ import {
   IsString,
   IsUUID,
   IsInt,
-  IsIP,
   IsDateString,
   IsOptional,
 } from 'class-validator';
@@ -26,27 +25,27 @@ export class CreateConfigDto {
   server_id: number;
 
   @ApiProperty({
-    description: 'VPN configuration body (WireGuard .conf, VLESS link, etc.)',
-    example: '[Interface]\nPrivateKey = ...\nAddress = 10.0.0.2/32\n...',
+    description: 'VLESS connection string or configuration',
+    example: 'vless://uuid@hostname:443?type=tcp&security=reality&pbk=xxx...',
     required: true,
   })
   @IsString()
   config_body: string;
 
   @ApiProperty({
-    description: 'Encrypted private key',
-    example: 'encrypted_private_key_here...',
+    description: 'Client email/identifier in 3X-UI',
+    example: 'user-cd49c385-1708445678',
     required: true,
   })
   @IsString()
   private_key: string;
 
   @ApiProperty({
-    description: 'Allocated IP address in the tunnel',
-    example: '10.0.0.2',
+    description: 'Xray inbound identifier',
+    example: 'xray-1',
     required: true,
   })
-  @IsIP()
+  @IsString()
   allocated_ip: string;
 
   @ApiProperty({

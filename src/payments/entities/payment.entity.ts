@@ -35,7 +35,7 @@ export class Payment {
 
   @ApiProperty({
     enum: PaymentProviderType,
-    example: PaymentProviderType.STRIPE,
+    example: PaymentProviderType.YOOKASSA,
   })
   @Column({
     type: 'enum',

@@ -20,11 +20,12 @@ export default () => ({
       'your-super-secret-refresh-key-change-in-production',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
-  stripe: {
-    apiKey: process.env.STRIPE_SECRET_KEY || '',
-    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
-    monthlyPriceId: process.env.STRIPE_MONTHLY_PRICE_ID || '',
-    yearlyPriceId: process.env.STRIPE_YEARLY_PRICE_ID || '',
+  yookassa: {
+    shopId: process.env.YOOKASSA_SHOP_ID || '',
+    secretKey: process.env.YOOKASSA_SECRET_KEY || '',
+    monthlyPrice: process.env.YOOKASSA_MONTHLY_PRICE || '500',
+    yearlyPrice: process.env.YOOKASSA_YEARLY_PRICE || '5000',
+    currency: process.env.YOOKASSA_CURRENCY || 'RUB',
   },
   xray: {
     panelUrl: process.env.XRAY_PANEL_URL || '',

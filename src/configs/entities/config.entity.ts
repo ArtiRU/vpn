@@ -28,16 +28,23 @@ export class Config {
   server: Server;
 
   @ApiProperty({
-    example: '[Interface]\nPrivateKey = ...\nAddress = 10.0.0.2/32\n...',
+    example: 'vless://uuid@hostname:443?type=tcp&security=reality&pbk=xxx&fp=chrome&sni=github.com...',
+    description: 'VLESS Reality connection string',
   })
   @Column({ type: 'text' })
   config_body: string;
 
-  @ApiProperty({ example: 'encrypted_private_key_here...' })
+  @ApiProperty({ 
+    example: 'user-cd49c385-1708445678',
+    description: 'Client email/identifier in 3X-UI',
+  })
   @Column({ type: 'text' })
   private_key: string;
 
-  @ApiProperty({ example: '10.0.0.2' })
+  @ApiProperty({ 
+    example: 'xray-1',
+    description: 'Xray inbound identifier',
+  })
   @Column({ type: 'varchar', length: 45 })
   allocated_ip: string;
 
