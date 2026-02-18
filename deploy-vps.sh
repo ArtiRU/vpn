@@ -56,9 +56,9 @@ if ! command -v docker &> /dev/null; then
     systemctl start docker
 fi
 
-if ! command -v docker-compose &> /dev/null; then
-    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
+# Install Docker Compose plugin if not present
+if ! docker compose version &> /dev/null; then
+    apt-get install -y docker-compose-plugin
 fi
 
 # Step 3: Install Git
@@ -158,8 +158,8 @@ fi
 # Step 8: Start services with Docker Compose
 echo -e "${YELLOW}[8/10] Starting services with Docker Compose...${NC}"
 if [ -f "docker-compose.yml" ]; then
-    docker-compose down 2>/dev/null || true
-    docker-compose up -d
+    docker compose down 2>/dev/null || true
+    docker compose up -d
     echo -e "${GREEN}Services started successfully${NC}"
 else
     echo -e "${RED}docker-compose.yml not found!${NC}"
