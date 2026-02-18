@@ -67,14 +67,10 @@ export class Server {
   updated_at: Date;
 
   // Relations: servers ───┬───── configs
-  //                       ├───── sessions
-  //                       └───── server_metrics
+  //                       └───── sessions
   @OneToMany('Config', 'server')
   configs: any[];
 
   @OneToMany('Session', 'server')
   sessions: any[];
-
-  @OneToMany('ServerMetric', 'server')
-  serverMetrics: any[];
 }
