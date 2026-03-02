@@ -336,6 +336,80 @@ export class XrayService {
   }
 
   /**
+   * Обновить listen-адрес у inbound (для Docker: 0.0.0.0 или пустая строка)
+   * 3x-ui API: POST /panel/api/inbounds/update
+   */
+  async updateInbound(
+    inboundId: number,
+    updates: { listen?: string; remark?: string; enable?: boolean },
+  ): Promise<void> {
+    try {
+      const session = await this.getSession();
+      const inbounds = await this.getInbounds();
+      const inbound = inbounds.find((i) => i.id === inboundId);
+      if (!inbound) {
+        throw new Error('Inbound not found');
+      }
+
+      const payload = {
+        id: inbound.id,
+        remark: updates.remark ?? inbound.remark,
+        listen: updates.listen ?? '',
+        port: inbound.port,
+        protocol: inbound.protocol,
+        enable: updates.enable ?? inbound.enable,
+        settings: typeof inbound.settings === 'string' ? inbound.settings : JSON.stringify(inbound.settings),
+        streamSettings:
+          typeof inbound.streamSettings === 'string'
+            ? inbound.streamSettings
+            : JSON.stringify(inbound.streamSettings),
+        sniffing: (inbound as any).sniffing ?? '',
+        tag: (inbound as any).tag ?? `inbound-${inbound.id}`,
+      };
+
+      const response = await this.axiosInstance.post(
+        '/panel/api/inbounds/update',
+        payload,
+        {
+          headers: { Cookie: session },
+        },
+      );
+
+      if (!response.data.success) {
+        throw new Error(response.data.msg || 'Failed to update inbound');
+      }
+      this.logger.log(`Updated inbound ${inboundId}, listen=${updates.listen ?? '0.0.0.0'}`);
+    } catch (error) {
+      this.logger.error('Failed to update inbound:', error.message);
+      if (error.response?.status === 401) {
+        this.sessionCookie = undefined;
+        return await this.updateInbound(inboundId, updates);
+      }
+      throw new HttpException(
+        error.message || 'Failed to update inbound',
+        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  /**
+   * Установить listen=0.0.0.0 для всех inbounds (решает "cannot assign requested address" в Docker)
+   */
+  async setAllInboundsListen(listen: string = ''): Promise<{ updated: number }> {
+    const inbounds = await this.getInbounds();
+    let updated = 0;
+    for (const inbound of inbounds) {
+      const currentListen = (inbound as any).listen;
+      const targetListen = listen || '';
+      if (currentListen !== targetListen) {
+        await this.updateInbound(inbound.id, { listen: targetListen });
+        updated++;
+      }
+    }
+    return { updated };
+  }
+
+  /**
    * Проверка доступности панели
    */
   async healthCheck(): Promise<boolean> {

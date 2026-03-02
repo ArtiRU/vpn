@@ -5,8 +5,6 @@
 # Остановка: docker compose down
 # ========================================
 
-version: '3.8'
-
 services:
   # ========================================
   # PostgreSQL Database

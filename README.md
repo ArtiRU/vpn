@@ -477,6 +477,50 @@ docker compose restart 3x-ui
 
 **Решение:** Создайте inbound в 3X-UI (см. раздел "Настройка 3X-UI")
 
+### "No VLESS Reality inbound configured"
+
+**Решение:** Создайте inbound в 3X-UI (см. раздел "Настройка 3X-UI")
+
+### Не могу зайти в панель 3X-UI / "Invalid username or password or two-factor code"
+
+**Сброс панели 3X-UI с нуля (пароль забыт или не совпадает с .env):**
+
+1. **Остановить контейнеры и удалить данные 3X-UI** (на сервере):
+
+```bash
+cd /opt/vpn-backend
+docker compose down
+docker volume rm vpn_3x_ui_data
+docker compose up -d
+```
+
+После этого панель будет с **логином по умолчанию: admin / admin**.
+
+2. **Сделать пароль панели таким же, как в .env:**
+
+- Вариант А: в .env задать `XRAY_PANEL_USERNAME=admin` и `XRAY_PANEL_PASSWORD=admin`, зайти в панель и сменить пароль в настройках на свой, затем обновить .env и перезапустить backend.
+- Вариант Б: сгенерировать bcrypt-хеш нового пароля и прописать его в БД панели (см. [3x-ui reset password](https://3x-ui.com/complete-guide-to-resetting-password-in-3x-ui-system/)).
+
+3. **Создать VLESS Reality inbound** в панели (см. "Настройка 3X-UI"). Обязательно укажите **Listen IP: 0.0.0.0** (или оставьте пустым), иначе в Docker будет ошибка `bind: cannot assign requested address`.
+
+4. **Если inbound уже есть, но Xray не стартует** (ошибка с 206.x.x.x:443 или :28108):
+
+- Убедитесь, что в .env указаны те же логин/пароль, что и в панели.
+- Вызовите ручку бэкенда, которая выставит listen=0.0.0.0 у всех inbounds, затем перезапустите контейнер 3x-ui:
+
+```bash
+# Проверка доступа к панели и списка inbounds
+curl http://localhost:3000/xray/panel/status
+
+# Исправить listen для всех inbounds (логин в панель из .env)
+curl -X POST http://localhost:3000/xray/panel/fix-listen
+
+# На сервере перезапустить 3x-ui
+docker restart vpn_3x_ui
+```
+
+После этого проверьте логи: `docker logs vpn_3x_ui --tail 20`.
+
 ### "Server not found"
 
 **Решение:** Создайте сервер в БД (см. раздел "Создайте сервер в базе данных")
@@ -523,6 +567,8 @@ docker compose up -d
 - `POST /auth/register` - Регистрация
 - `POST /auth/login` - Вход
 - `POST /payments/webhook/yookassa` - YooKassa webhook
+- `GET /xray/panel/status` - Проверка доступа к панели 3X-UI и списка inbounds
+- `POST /xray/panel/fix-listen` - Выставить listen=0.0.0.0 у всех inbounds (для Docker)
 
 ### Защищенные (требуют Bearer Token)
 - `GET /auth/me` - Текущий пользователь
